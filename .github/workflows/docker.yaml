@@ -6,6 +6,7 @@ on:
 
 env:
   AWS_REGION: eu-central-1
+  ECR_REGISTRY: public.ecr.aws/q2s9r7f1
   ECR_REPOSITORY: hsa25
 
 permissions:
@@ -36,8 +37,6 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
         # Don't use this kind of tagging in production ;)
         run: |
           docker build ./service-one --tag $ECR_REGISTRY/$ECR_REPOSITORY:one
