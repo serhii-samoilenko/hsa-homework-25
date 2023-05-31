@@ -1,0 +1,44 @@
+name: Build and push Docker images
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: eu-central-1
+  ECR_REPOSITORY: hsa25
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        # Don't use this kind of tagging in production ;)
+        run: |
+          docker build ./service-one --tag $ECR_REGISTRY/$ECR_REPOSITORY:one
+          docker build ./service-two --tag $ECR_REGISTRY/$ECR_REPOSITORY:two
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:one
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:two
