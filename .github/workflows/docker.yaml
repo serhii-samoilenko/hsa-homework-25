@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: eu-central-1
-  ECR_REPOSITORY: hsa25
+  DOCKER_REPOSITORY: ssamoilenko/hsa-25-ec2
 
 permissions:
   contents: read
@@ -21,24 +21,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+      - name: docker login
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          DOCKER_USER: ${{secrets.DOCKER_USER}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+        run: |
+          docker login -u $DOCKER_USER -p $DOCKER_PASSWORD 
+
+      - name: Build, tag, and push image to Docker Hub
+        id: build-image
         # Don't use this kind of tagging in production ;)
         run: |
-          docker build ./service-one --tag $ECR_REGISTRY/$ECR_REPOSITORY:one
-          docker build ./service-two --tag $ECR_REGISTRY/$ECR_REPOSITORY:two
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:one
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:two
+          docker build ./service-one --tag $DOCKER_REPOSITORY:one
+          docker build ./service-two --tag $DOCKER_REPOSITORY:two
+          docker push $DOCKER_REPOSITORY:one
+          docker push $DOCKER_REPOSITORY:two
